@@ -9,7 +9,7 @@ COMPILE_ROOT := $(shell pwd)
 CC = arm-linux-gnueabihf-g++
 STRIP = arm-linux-gnueabihf-strip
 
-CFLAGS = -I$(MINIGUI_PATH)/include -I$(MINIGUI_PATH)/include/freetype2 -I../include/easyui -I$(PROJECT_PATH)/release/include
+CFLAGS = -I$(MINIGUI_PATH)/include -I$(MINIGUI_PATH)/include/freetype2 -I$(MINIGUI_PATH)/include/easyui -I$(PROJECT_PATH)/release/include
 LDFLAGS = -L$(MINIGUI_PATH)/lib -L$(PROJECT_PATH)/release/nvr/i2m/010A/glibc/8.2.1/lib/dynamic/
 CONFIG_PREFIX =.
 
