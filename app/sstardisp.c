@@ -12,8 +12,10 @@
 #include "SAT070CP50_1024x600.h"
 //#include "SAT070AT50_800x480.h"
 
-#define VIDEO_DISP_X 64
-#define VIDEO_DISP_Y 64
+#define UI_1024_600
+
+#define VIDEO_DISP_X 80
+#define VIDEO_DISP_Y 60
 #define VIDEO_DISP_W 640
 #define VIDEO_DISP_H 360
 
@@ -54,13 +56,22 @@ int sstar_disp_init(MI_DISP_PubAttr_t *pstDispPubAttr)
         pstDispPubAttr->eIntfType = E_MI_DISP_INTF_LCD;
         eLinkType = E_MI_PNL_LINK_TTL;
     }
+    #ifdef UI_1024_600
+        stInputPortAttr.u16SrcWidth = 822;//VIDEO_DISP_1024_W;
+        stInputPortAttr.u16SrcHeight = 464;//VIDEO_DISP_1024_H;
+        stInputPortAttr.stDispWin.u16X = VIDEO_DISP_1024_X;
+        stInputPortAttr.stDispWin.u16Y = VIDEO_DISP_1024_Y;
+        stInputPortAttr.stDispWin.u16Width = 822;//VIDEO_DISP_1024_W;
+        stInputPortAttr.stDispWin.u16Height = 464;//VIDEO_DISP_1024_H;
+    #else
+        stInputPortAttr.u16SrcWidth = VIDEO_DISP_1024_W;
+        stInputPortAttr.u16SrcHeight = VIDEO_DISP_1024_H;
+        stInputPortAttr.stDispWin.u16X = VIDEO_DISP_1024_X;
+        stInputPortAttr.stDispWin.u16Y = VIDEO_DISP_1024_Y;
+        stInputPortAttr.stDispWin.u16Width = VIDEO_DISP_1024_W;
+        stInputPortAttr.stDispWin.u16Height = VIDEO_DISP_1024_H;
+    #endif
 
-    stInputPortAttr.u16SrcWidth = VIDEO_DISP_1024_W;
-    stInputPortAttr.u16SrcHeight = VIDEO_DISP_1024_H;
-    stInputPortAttr.stDispWin.u16X = VIDEO_DISP_1024_X;
-    stInputPortAttr.stDispWin.u16Y = VIDEO_DISP_1024_Y;
-    stInputPortAttr.stDispWin.u16Width = VIDEO_DISP_1024_W;
-    stInputPortAttr.stDispWin.u16Height = VIDEO_DISP_1024_H;
     MI_DISP_SetPubAttr(0, pstDispPubAttr);
     MI_DISP_Enable(0);
     MI_DISP_BindVideoLayer(0, 0);
