@@ -28,7 +28,55 @@
 *
 * 在Eclipse编辑器中  使用 “alt + /”  快捷键可以打开智能提示
 */
+#include "mi_common_datatype.h"
+#include "mi_wlan.h"
 
+
+
+bool isWifiSupport = true;
+bool isWifiEnable = true;
+bool isSsidSaved = true;	// if exsit saved ssid&passwd
+bool isConnected = false;	// if connected
+WLAN_HANDLE wlanHdl = -1;
+MI_WLAN_ConnectParam_t stConnectParam = {E_MI_WLAN_SECURITY_WPA2, "SKY", "12345678", 5000};
+static MI_WLAN_OpenParams_t stOpenParam = {E_MI_WLAN_NETWORKTYPE_INFRA};
+static MI_WLAN_InitParams_t stParm = {"/config/wifi/wlan.json"};
+static MI_WLAN_Status_t  status;
+// read from wlan config
+
+class WifiSetupThread : public Thread {
+protected:
+	virtual bool threadLoop() {
+		// get wifi status from config file
+		// set isWifiSupport, isWifiEnable, isSsidSaved, stConnectParam
+
+		if (isWifiSupport && isWifiEnable)
+		{
+			MI_WLAN_Init(&stParm);
+			sleep(5000);
+			MI_WLAN_Open(&stOpenParam);
+			sleep(5000);
+
+			if (isSsidSaved)
+				MI_WLAN_Connect(&wlanHdl, &stConnectParam);
+
+			MI_WLAN_GetStatus(&status);
+
+			if(status.stStaStatus.state == WPA_COMPLETED)
+			{
+				isConnected = true;
+				printf("%s %s\n", status.stStaStatus.ip_address, status.stStaStatus.ssid);
+			}
+			else
+			{
+				printf("wifi inconnected\n");
+			}
+		}
+		return false;
+	}
+};
+
+static WifiSetupThread wifiSetupThread;
 /**
  * 注册定时器
  * 在此数组中添加即可
@@ -41,9 +89,20 @@ static S_ACTIVITY_TIMEER REGISTER_ACTIVITY_TIMER_TAB[] = {
 static void onUI_init(){
     //Tips :添加 UI初始化的显示代码到这里,如:mText1->setText("123");
 	EASYUICONTEXT->hideStatusBar();
+	printf("wifiSetupThread run\n");
+	wifiSetupThread.run("wifiSetup");
 }
 
 static void onUI_quit() {
+	wifiSetupThread.requestExitAndWait();
+	if (wlanHdl != -1)
+	{
+		MI_WLAN_Disconnect(wlanHdl);
+		wlanHdl = -1;
+	}
+	MI_WLAN_Close();
+	sleep(3);
+	MI_WLAN_DeInit();
 
 }
 
@@ -75,10 +134,11 @@ const char* IconTab[]={
 		"tesListActivity",
 		"adActivity",
 		"qrcodeActivity",
-    "animationActivity",
-    "sliderwindowActivity",
-    "uartActivity",
-    "painterActivity",
+		"animationActivity",
+		"sliderwindowActivity",
+		"uartActivity",
+		"painterActivity",
+		"networkSettingActivity",
 };
 
 static void onSlideItemClick_Slidewindow1(ZKSlideWindow *pSlideWindow, int index) {
