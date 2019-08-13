@@ -52,11 +52,11 @@ typedef struct {
 
 typedef void* (*VoiceAnalyzeCallback)(char*, int);
 
-int ST_VoiceDetectInit();
-int ST_VoiceDetectDeinit();
-int ST_VoiceDetectGetWordList(WordInfo_t *pWordList, int cnt);
-int ST_VoiceDetectStart(VoiceAnalyzeCallback pfnCallback);
-void ST_VoiceDetectStop();
+int SSTAR_VoiceDetectInit();
+int SSTAR_VoiceDetectDeinit();
+int SSTAR_VoiceDetectGetWordList(WordInfo_t *pWordList, int cnt);
+int SSTAR_VoiceDetectStart(VoiceAnalyzeCallback pfnCallback);
+void SSTAR_VoiceDetectStop();
 
 }
 
@@ -133,17 +133,17 @@ static void onUI_init(){
     memset(sWordInfoList, 0, sizeof(sWordInfoList));
     memset(sIsSeled, 0, sizeof(sIsSeled));
 
-    ST_VoiceDetectInit();
-    int ret = ST_VoiceDetectGetWordList(sWordInfoList, WORD_COUNT);
+    SSTAR_VoiceDetectInit();
+    int ret = SSTAR_VoiceDetectGetWordList(sWordInfoList, WORD_COUNT);
     LOGD("ret: %d\n", ret);
 
-    ST_VoiceDetectStart(onVoiceAnalyzeCallback);
+    SSTAR_VoiceDetectStart(onVoiceAnalyzeCallback);
 }
 
 static void onUI_quit() {
 //    EASYUICONTEXT->showStatusBar();
-	ST_VoiceDetectStop();
-	ST_VoiceDetectDeinit();
+	SSTAR_VoiceDetectStop();
+	SSTAR_VoiceDetectDeinit();
 }
 
 

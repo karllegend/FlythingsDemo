@@ -42,9 +42,10 @@ INCLUDE_DIR := -I$(EASYUI_COMMON_INCLUDE) \
 					-I$(ZKSW_PREBUILT_INCLUDE_PATH) \
 					-I. \
 					-I$(ZKSW_PREBUILT_INCLUDE_PATH)/mgeff \
-					-I ../jni/sdkdir/include
+					-I ../jni/sdkdir/include \
+					-I ../jni/voicedetect
 
-LDFLAGS =  -leasyui -pthread -lmi_sys -lmi_disp -lmi_panel -lmi_ao -lmi_gfx -lmi_divp -lmi_vdec -lmi_common -lstdc++ -lmi_wlan -lcjson
+LDFLAGS =  -leasyui -pthread -lmi_sys -lmi_disp -lmi_panel -lmi_ao -lmi_gfx -lmi_divp -lmi_vdec -lmi_common -lstdc++ -lmi_wlan -lcjson -lmi_ai -lCSpotter
 LDFLAGS += -L$(ZKSW_PREBUILT_LIB_PATH)/system -L. -L ../jni/sdkdir/lib
 
 TARGET=../libs/armeabi/libzkgui.so

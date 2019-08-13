@@ -277,41 +277,7 @@ static void onUI_intent(const Intent *intentPtr) {
 	// get wifi config setting
 
 	// check if support wifi
-//	if (isWifiSupport)
-//	{
-//		mTextviewNotSupportPtr->setVisible(FALSE);
-//		mTextviewWifiPtr->setVisible(TRUE);
-//		mButtonWifiswPtr->setVisible(TRUE);
-//		mButtonWifiswPtr->setSelected(isWifiEnable);
-//		mTextviewWifiListPtr->setVisible(isWifiEnable);
-//		mTextview_loadingPtr->setVisible(isWifiEnable);
-//
-//		if (isWifiEnable)
-//		{
-//			isLoading = true;
-//			loadingStatus = true;
-//
-//			printf("register loading timer\n");
-//			registerPrivTimer(&isRegistered, TIMER_LOADING, 50);
-//			//registerPrivTimer(&isCreated, TIMER_SCAN, 50);
-//
-//			if (!wifiScanThread.isRunning())
-//			{
-//				printf("start new thread\n");
-//				wifiScanThread.run("wifiScan");
-//			}
-//		}
-//	}
-//	else
-//	{
-//		mTextviewNotSupportPtr->setVisible(TRUE);
-//		mTextviewWifiPtr->setVisible(FALSE);
-//		mButtonWifiswPtr->setVisible(FALSE);
-//		mTextviewWifiListPtr->setVisible(FALSE);
-//		mTextview_loadingPtr->setVisible(FALSE);
-//	}
-//
-//	mListviewNetworkPtr->setVisible(FALSE);
+
 }
 
 /*
