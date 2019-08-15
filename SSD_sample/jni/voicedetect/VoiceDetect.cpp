@@ -22,6 +22,8 @@
 #include "char_conversion.h"
 
 
+#define AD_LOG(fmt, args...) {printf("\033[1;34m");printf("%s[%d]:", __FUNCTION__, __LINE__);printf(fmt, ##args);printf("\033[0m");}
+
 typedef struct
 {
     unsigned char*      pCmd;
@@ -580,8 +582,6 @@ static MI_S32 SSTAR_AudioInStop()
     pstAudioInMng->bRunFlag = FALSE;
     pthread_join(pstAudioInMng->pt, NULL);
 
-    sleep(1);
-
     ExecFunc(MI_AI_DisableVqe(AiDevId, AiChn), MI_SUCCESS);
     ExecFunc(MI_AI_DisableChn(AiDevId, AiChn), MI_SUCCESS);
     ExecFunc(MI_AI_Disable(AiDevId), MI_SUCCESS);
@@ -600,6 +600,7 @@ static void *_SSTAR_VoiceAnalyzeProc_(void *pdata)
     //unsigned char pbyResult[256];
     unsigned long msg[4];
 
+    AD_LOG("Enter _SSTAR_VoiceAnalyzeProc_\n");
 
     if((s32Ret = CSpotter_Reset(pstVoiceMng->hCSpotter)) != CSPOTTER_SUCCESS)
     {
@@ -622,7 +623,7 @@ static void *_SSTAR_VoiceAnalyzeProc_(void *pdata)
         }
 
         // reduce CSpotter_AddSample core dump
-        usleep(1000*10);
+        //usleep(1000*10);
 
         // ST_DBG("pFrameData:%p, frameLen:%d\n", pstVoiceFrame->pFrameData, pstVoiceFrame->frameLen);
         s32Ret = CSpotter_AddSample(pstVoiceMng->hCSpotter, (short*)pstVoiceFrame->pFrameData, pstVoiceFrame->frameLen / 2);
@@ -637,8 +638,9 @@ static void *_SSTAR_VoiceAnalyzeProc_(void *pdata)
 
                 // notify callback
                 FIND_TRAINING_WORD((char *)pbyResult, g_wordListHead, &index);
-                printf("training word is %s, index is %d\n", (char *)pbyResult, index);
+                AD_LOG("training word is %s, index is %d\n", (char *)pbyResult, index);
                 pfcCallback((char*)pbyResult, strlen((const char*)pbyResult));
+                AD_LOG("callback exec success\n");
             }
         }
 
@@ -689,6 +691,9 @@ static MI_S32 SSTAR_VoiceAnalyzeInit()
     }
 
     nCmdNum = CSpotter_GetCommandNumber(hCSpotter);
+
+    AD_LOG("training list size is %d\n", nCmdNum);
+
     for (i = 0; i < nCmdNum; i ++)
     {
         memset(szCmdBuf, 0, sizeof(szCmdBuf));
@@ -698,7 +703,7 @@ static MI_S32 SSTAR_VoiceAnalyzeInit()
             // skip the same cmd
             if(strcmp(szCmdBuf, szCmdBufTemp) != 0)
             {
-                printf("%s %d\n", szCmdBuf, nCmdNum);
+            	AD_LOG("%s %d\n", szCmdBuf, nCmdNum);
                 memset(szCmdBufTemp, 0, sizeof(szCmdBufTemp));
                 strcpy(szCmdBufTemp, szCmdBuf);
 
@@ -746,7 +751,6 @@ static MI_S32 SSTAR_VoiceAnalyzeStop()
     {
         pstVoiceMng->bRunFlag = FALSE;
         pthread_join(pstVoiceMng->pt, NULL);
-        sleep(1);
     }
 
     return MI_SUCCESS;
@@ -814,7 +818,7 @@ ST_Voice_Cmd_S* SSTAR_GetVoiceCMD(void)
         pstCmdMng->stListHead.next = pListPos->next;
         pListPos->next->prev = pListPos->prev;
 
-        printf("%s %d del node, %p, %p, cmd:%s\n", __func__, __LINE__,  pstVoiceCMDNode,
+        AD_LOG("%s %d del node, %p, %p, cmd:%s\n", __func__, __LINE__,  pstVoiceCMDNode,
             pstVoiceCMDNode->pCmd, pstVoiceCMDNode->pCmd);
 
         if (pstVoiceCMDNode->pCmd)
@@ -904,7 +908,7 @@ MI_S32 SSTAR_VoiceDetectStart(VoiceAnalyzeCallback pfnCallback)
 {
     if (!list_empty(&g_wordListHead))
     {
-        printf("ENTER detectStart >> start_analyze:%d start_audioIn:%d do_analyze:%d\n", start_analyze, start_audioIn, do_analyze);
+    	AD_LOG("ENTER detectStart >> start_analyze:%d start_audioIn:%d do_analyze:%d\n", start_analyze, start_audioIn, do_analyze);
     
         if (!start_analyze)
         {
@@ -922,22 +926,22 @@ MI_S32 SSTAR_VoiceDetectStart(VoiceAnalyzeCallback pfnCallback)
                 {
                     do_analyze = 1;
                     start_analyze = 1;
-                    printf("detectStart SUCCESS >> start_analyze:%d start_audioIn:%d do_analyze:%d\n", start_analyze, start_audioIn, do_analyze);
+                    AD_LOG("detectStart SUCCESS >> start_analyze:%d start_audioIn:%d do_analyze:%d\n", start_analyze, start_audioIn, do_analyze);
                     return MI_SUCCESS;
                 }
             }
         }
     }
     else
-        printf("please train word first\n");
+    	AD_LOG("please train word first\n");
 
-    printf("detectStart FAIL >> start_analyze:%d start_audioIn:%d do_analyze:%d\n", start_analyze, start_audioIn, do_analyze);
+    AD_LOG("detectStart FAIL >> start_analyze:%d start_audioIn:%d do_analyze:%d\n", start_analyze, start_audioIn, do_analyze);
     return -1;
 }
 
 void SSTAR_VoiceDetectStop()
 {
-    printf("ENTER detectStart >> start_analyze:%d start_audioIn:%d do_analyze:%d\n", start_analyze, start_audioIn, do_analyze);
+	AD_LOG("ENTER detectStart >> start_analyze:%d start_audioIn:%d do_analyze:%d\n", start_analyze, start_audioIn, do_analyze);
     
     if (start_analyze == 1)
     {
@@ -958,7 +962,7 @@ void SSTAR_VoiceDetectStop()
             }
         }
 
-        printf("LEAVE detectStart >> start_analyze:%d start_audioIn:%d do_analyze:%d\n", start_analyze, start_audioIn, do_analyze);
+        AD_LOG("LEAVE detectStart >> start_analyze:%d start_audioIn:%d do_analyze:%d\n", start_analyze, start_audioIn, do_analyze);
     }
 }
 

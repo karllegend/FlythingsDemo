@@ -42,38 +42,53 @@ MI_WLAN_ConnectParam_t stConnectParam = {E_MI_WLAN_SECURITY_WPA2, "SKY", "123456
 static MI_WLAN_OpenParams_t stOpenParam = {E_MI_WLAN_NETWORKTYPE_INFRA};
 static MI_WLAN_InitParams_t stParm = {"/config/wifi/wlan.json"};
 static MI_WLAN_Status_t  status;
+static bool isBootupConnect = false;
 // read from wlan config
 
 class WifiSetupThread : public Thread {
+public:
+	void setCycleCnt(int cnt, int sleepMs) { nCycleCnt = cnt; nSleepMs = sleepMs; }
+
 protected:
 	virtual bool threadLoop() {
-		// get wifi status from config file
-		// set isWifiSupport, isWifiEnable, isSsidSaved, stConnectParam
-
-		if (isWifiSupport && isWifiEnable)
+		if (!isBootupConnect)
 		{
 			MI_WLAN_Init(&stParm);
-			sleep(5000);
 			MI_WLAN_Open(&stOpenParam);
-			sleep(5000);
 
-			if (isSsidSaved)
+			if (isWifiEnable && isSsidSaved)
 				MI_WLAN_Connect(&wlanHdl, &stConnectParam);
 
-			MI_WLAN_GetStatus(&status);
+			isBootupConnect = true;
+		}
 
-			if(status.stStaStatus.state == WPA_COMPLETED)
+		if (isWifiEnable && isSsidSaved)
+		{
+			if (nCycleCnt-- > 0)
 			{
-				isConnected = true;
-				printf("%s %s\n", status.stStaStatus.ip_address, status.stStaStatus.ssid);
-			}
-			else
-			{
-				printf("wifi inconnected\n");
+				MI_WLAN_GetStatus(&status);
+
+				if(status.stStaStatus.state == WPA_COMPLETED)
+				{
+					isConnected = true;
+					printf("%s %s\n", status.stStaStatus.ip_address, status.stStaStatus.ssid);
+					return false;
+				}
+
+				if (!nCycleCnt)
+					printf("wifi inconnected\n");
+
+				sleep(nSleepMs);
+				return true;
 			}
 		}
+
 		return false;
 	}
+
+private:
+	int nCycleCnt;
+	int nSleepMs;
 };
 
 static WifiSetupThread wifiSetupThread;
@@ -89,8 +104,16 @@ static S_ACTIVITY_TIMEER REGISTER_ACTIVITY_TIMER_TAB[] = {
 static void onUI_init(){
     //Tips :添加 UI初始化的显示代码到这里,如:mText1->setText("123");
 	EASYUICONTEXT->hideStatusBar();
-	printf("wifiSetupThread run\n");
-	wifiSetupThread.run("wifiSetup");
+
+	// get wifi status from config file
+	// set isWifiSupport, isWifiEnable, isSsidSaved, stConnectParam
+
+	if (isWifiSupport)
+	{
+		wifiSetupThread.setCycleCnt(20, 500);
+		printf("wifiSetupThread run\n");
+		wifiSetupThread.run("wifiSetup");
+	}
 }
 
 static void onUI_quit() {

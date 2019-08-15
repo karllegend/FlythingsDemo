@@ -40,6 +40,44 @@ extern MI_WLAN_ConnectParam_t stConnectParam;
 extern bool isConnected;
 extern bool isSsidSaved;
 
+class WifiChangeConnThread : public Thread {
+public:
+	void setCycleCnt(int cnt, int sleepMs) { nCycleCnt = cnt; nSleepMs = sleepMs; }
+
+protected:
+	virtual bool threadLoop() {
+		if (nCycleCnt-- > 0)
+		{
+			MI_WLAN_GetStatus(&status);
+
+			if(status.stStaStatus.state == WPA_COMPLETED)
+			{
+				printf("wifi connect success: %s %s\n", status.stStaStatus.ip_address, status.stStaStatus.ssid);
+				isConnected = true;
+				isSsidSaved = true;
+
+				memset(&stConnectParam, 0, sizeof(MI_WLAN_ConnectParam_t));
+				memcpy(&stConnectParam, &stConnectInfo, sizeof(MI_WLAN_ConnectParam_t));
+				return false;
+			}
+
+			if (!nCycleCnt)
+				printf("wifi connect failed\n");
+
+			sleep(nSleepMs);
+			return true;
+		}
+
+		return false;
+	}
+
+private:
+	int nCycleCnt;
+	int nSleepMs;
+};
+
+static WifiChangeConnThread wifiConnectThread;
+
 /**
  * 注册定时器
  * 填充数组用于注册定时器
@@ -162,21 +200,8 @@ static bool onButtonClick_Buttonbg(ZKButton *pButton) {
 static bool onButtonClick_Button_connect_conn(ZKButton *pButton) {
     //LOGD(" ButtonClick Button_connect_conn !!!\n");
 	MI_WLAN_Connect(&wlanHdl, &stConnectInfo);
-	MI_WLAN_GetStatus(&status);
-
-	if(status.stStaStatus.state == WPA_COMPLETED)
-	{
-		printf("%s %s\n", status.stStaStatus.ip_address, status.stStaStatus.ssid);
-		isConnected = true;
-		isSsidSaved = true;
-
-		memset(&stConnectParam, 0, sizeof(MI_WLAN_ConnectParam_t));
-		memcpy(&stConnectParam, &stConnectInfo, sizeof(MI_WLAN_ConnectParam_t));
-		EASYUICONTEXT->closeActivity("networkSetting3Activity");
-	}
-	else
-		printf("wifi inconnected\n");
-
+	wifiConnectThread.setCycleCnt(20, 500);
+	wifiConnectThread.run();
 	EASYUICONTEXT->closeActivity("networkSetting3Activity");
     return false;
 }
