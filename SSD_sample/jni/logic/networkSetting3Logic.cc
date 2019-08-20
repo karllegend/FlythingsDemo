@@ -31,14 +31,11 @@
 */
 #include "mi_common_datatype.h"
 #include "mi_wlan.h"
-
+#include "wifiInfo.h"
 
 static MI_WLAN_ConnectParam_t stConnectInfo;
 static MI_WLAN_Status_t status;
-extern WLAN_HANDLE wlanHdl;
-extern MI_WLAN_ConnectParam_t stConnectParam;
-extern bool isConnected;
-extern bool isSsidSaved;
+static WLAN_HANDLE wlanHdl = -1;
 
 class WifiChangeConnThread : public Thread {
 public:
@@ -53,11 +50,11 @@ protected:
 			if(status.stStaStatus.state == WPA_COMPLETED)
 			{
 				printf("wifi connect success: %s %s\n", status.stStaStatus.ip_address, status.stStaStatus.ssid);
-				isConnected = true;
-				isSsidSaved = true;
-
-				memset(&stConnectParam, 0, sizeof(MI_WLAN_ConnectParam_t));
-				memcpy(&stConnectParam, &stConnectInfo, sizeof(MI_WLAN_ConnectParam_t));
+				setConnectionStatus(true);
+				setSsidSavedStatus(true);
+				setWlanHandle(wlanHdl);
+				saveConnectParam(&stConnectInfo);
+				// save to config file
 				return false;
 			}
 

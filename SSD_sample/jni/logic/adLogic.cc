@@ -68,13 +68,16 @@ static bool sIsSeled[WORD_COUNT];
 static void* onVoiceAnalyzeCallback(char *msg, int ext) {
 	LOGD("msg: %s, ext %d\n", msg, ext);
 	for (int i = 0; i < WORD_COUNT; ++i) {
-		if (strcmp(msg, sWordInfoList[i].szWord) == 0) {
+		if (!memcmp(msg, sWordInfoList[i].szWord, strlen(sWordInfoList[i].szWord)))
+		{
 			memset(sIsSeled, 0, sizeof(sIsSeled));
 			sIsSeled[i] = true;
 			mWordListviewPtr->refreshListView();
 			break;
 		}
 	}
+
+	return NULL;
 }
 
 

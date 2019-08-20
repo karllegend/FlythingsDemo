@@ -29,13 +29,7 @@
 *
 * 在Eclipse编辑器中  使用 “alt + /”  快捷键可以打开智能提示
 */
-#include "mi_common_datatype.h"
-#include "mi_wlan.h"
-#include "wifiInfo.h"
-#include <string.h>
 
-
-static MI_WLAN_Status_t status;
 
 /**
  * 注册定时器
@@ -46,36 +40,6 @@ static S_ACTIVITY_TIMEER REGISTER_ACTIVITY_TIMER_TAB[] = {
 	//{0,  6000}, //定时器id=0, 时间间隔6秒
 	//{1,  1000},
 };
-
-// upercase
-static char* strupr(char* src)
-{
-	char *p = src;
-	while (*p != '\0')
-	{
-		if (*p >= 'a' && *p <= 'z')
-			*p -= 32;
-
-		p++;
-	}
-
-	return src;
-}
-
-// lowercase
-static char* strlwr(char* src)
-{
-	char *p = src;
-	while (*p != '\0')
-	{
-		if (*p >= 'A' && *p <= 'Z')
-			*p -= 32;
-
-		p++;
-	}
-
-	return src;
-}
 
 /**
  * 当界面构造时触发
@@ -92,25 +56,6 @@ static void onUI_intent(const Intent *intentPtr) {
     if (intentPtr != NULL) {
         //TODO
     }
-
-    MI_WLAN_GetStatus(&status);
-
-	if(status.stStaStatus.state == WPA_COMPLETED)
-	{
-		printf("%s %s\n", status.stStaStatus.ip_address, status.stStaStatus.ssid);
-		mTextview_connected_ssidPtr->setText((char*)status.stStaStatus.ssid);
-		mTextview_connected_ipPtr->setText((char*)status.stStaStatus.ip_address);
-		mTextview_connected_macPtr->setText(strupr((char*)status.stStaStatus.bssid));
-		mTextview_connected_encryptionPtr->setText(strupr((char*)status.stStaStatus.key_mgmt));
-	}
-	else
-	{
-		printf("wifi inconnected\n");
-		mTextview_connected_ssidPtr->setText("");
-		mTextview_connected_ipPtr->setText("");
-		mTextview_connected_macPtr->setText("");
-		mTextview_connected_encryptionPtr->setText("");
-	}
 }
 
 /*
@@ -169,7 +114,7 @@ static bool onUI_Timer(int id){
  *         false
  *            触摸事件将继续传递到控件上
  */
-static bool onnetworkSetting2ActivityTouchEvent(const MotionEvent &ev) {
+static bool onplaylistActivityTouchEvent(const MotionEvent &ev) {
     switch (ev.mActionStatus) {
 		case MotionEvent::E_ACTION_DOWN://触摸按下
 			//LOGD("时刻 = %ld 坐标  x = %d, y = %d", ev.mEventTime, ev.mX, ev.mY);
@@ -183,20 +128,20 @@ static bool onnetworkSetting2ActivityTouchEvent(const MotionEvent &ev) {
 	}
 	return false;
 }
-
 static bool onButtonClick_sys_back(ZKButton *pButton) {
     //LOGD(" ButtonClick sys_back !!!\n");
     return false;
 }
 
-static bool onButtonClick_Button_connected_disconn(ZKButton *pButton) {
-    //LOGD(" ButtonClick Button_connected_disconn !!!\n");
-	printf("page2 disconnect\n");
-	MI_WLAN_Disconnect(getWlanHandle());
-	//setWlanHandle(-1);
-	setConnectionStatus(false);
+static int getListItemCount_Listview_playlist(const ZKListView *pListView) {
+    //LOGD("getListItemCount_Listview_playlist !\n");
+    return 8;
+}
 
-	//EASYUICONTEXT->goBack();
-	EASYUICONTEXT->closeActivity("networkSetting2Activity");
-    return false;
+static void obtainListItemData_Listview_playlist(ZKListView *pListView,ZKListView::ZKListItem *pListItem, int index) {
+    //LOGD(" obtainListItemData_ Listview_playlist  !!!\n");
+}
+
+static void onListItemClick_Listview_playlist(ZKListView *pListView, int index, int id) {
+    //LOGD(" onListItemClick_ Listview_playlist  !!!\n");
 }

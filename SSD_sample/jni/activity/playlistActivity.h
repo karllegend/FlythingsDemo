@@ -1,8 +1,8 @@
 /***********************************************
 /gen auto by zuitools
 ***********************************************/
-#ifndef __MAINACTIVITY_H__
-#define __MAINACTIVITY_H__
+#ifndef __PLAYLISTACTIVITY_H__
+#define __PLAYLISTACTIVITY_H__
 
 
 #include "app/Activity.h"
@@ -24,15 +24,21 @@
 #include "control/ZKEditText.h"
 #include "control/ZKVideoView.h"
 #include "window/ZKSlideWindow.h"
-#include <dlfcn.h>
 
 /*TAG:Macro宏ID*/
-#define ID_MAIN_Digitalclock2    93002
-#define ID_MAIN_Window2    110002
-#define ID_MAIN_Slidewindow1    30001
+#define ID_PLAYLIST_Textview_playlist_title    50003
+#define ID_PLAYLIST_SubItem_modifytime    20005
+#define ID_PLAYLIST_SubItem_filesize    20004
+#define ID_PLAYLIST_SubItem_filetype    20003
+#define ID_PLAYLIST_SubItem_filename    20002
+#define ID_PLAYLIST_SubItem_icon    20001
+#define ID_PLAYLIST_Listview_playlist    80001
+#define ID_PLAYLIST_Textview_curPath    50002
+#define ID_PLAYLIST_sys_back   100
+#define ID_PLAYLIST_Textview_curPath_title    50001
 /*TAG:Macro宏ID END*/
 
-class mainActivity : public Activity, 
+class playlistActivity : public Activity, 
                      public ZKSeekBar::ISeekBarChangeListener, 
                      public ZKListView::IItemClickListener,
                      public ZKListView::AbsListAdapter,
@@ -42,8 +48,8 @@ class mainActivity : public Activity,
                      public ZKVideoView::IVideoPlayerMessageListener
 {
 public:
-    mainActivity();
-    virtual ~mainActivity();
+    playlistActivity();
+    virtual ~playlistActivity();
 
     /**
      * 注册定时器
@@ -83,7 +89,7 @@ protected:
     void rigesterActivityTimer();
 
     virtual void onVideoPlayerMessage(ZKVideoView *pVideoView, int msg);
-    void videoLoopPlayback(ZKVideoView *pVideoView, int msg, int callbackTabIndex);
+    void videoLoopPlayback(ZKVideoView *pVideoView, int msg, size_t callbackTabIndex);
     void startVideoLoopPlayback();
     void stopVideoLoopPlayback();
     bool parseVideoFileList(const char *pFileListPath, std::vector<string>& mediaFileList);

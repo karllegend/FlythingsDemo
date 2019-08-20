@@ -32,6 +32,7 @@
 */
 #include "mi_common_datatype.h"
 #include "mi_wlan.h"
+#include "wifiInfo.h"
 #include <algorithm>
 
 #define TIMER_LOADING	0
@@ -50,17 +51,7 @@ typedef struct
 static bool isRegistered = false;
 static bool isLoading = false;
 static bool loadingStatus = false;	// save last loading status
-
-// scanning timer
-static bool isCreated = false;
-
-
-extern bool isWifiSupport;
-extern bool isWifiEnable;
-extern bool isSsidSaved;	// if exsit saved ssid&passwd
-extern bool isConnected;
-extern WLAN_HANDLE wlanHdl;
-extern MI_WLAN_ConnectParam_t stConnectParam;
+static WLAN_HANDLE wlanHdl;
 static MI_WLAN_Status_t status;
 static MI_WLAN_ScanResult_t scanResult;
 static int namedAPNumber = 0;
@@ -97,11 +88,12 @@ static void saveScanResult(MI_WLAN_ScanResult_t *pScanResult, std::vector<ScanRe
 		if (pSsid && strcmp(pSsid, "\"\""))
 		{
 			int len = strlen(pSsid);
+			MI_WLAN_ConnectParam_t *pConnParam = getConnectParam();
 			strncpy(stScanRes.ssid, pSsid+1, len-2);
 			strcpy(stScanRes.mac, (char*)pScanResult->stAPInfo[i].au8Mac);
 			stScanRes.bEncrypt = pScanResult->stAPInfo[i].bEncryptKey;
 			stScanRes.signalSTR = pScanResult->stAPInfo[i].stQuality.signalSTR;
-			if (isConnected && !strcmp(stScanRes.ssid, (char*)stConnectParam.au8SSId))
+			if (getConnectionStatus() && !strcmp(stScanRes.ssid, (char*)pConnParam->au8SSId))
 				stScanRes.bConnected = true;
 			scanInfo->push_back(stScanRes);
 		}
@@ -116,7 +108,7 @@ static bool sortDesc(ScanResult_t a, ScanResult_t b)
 static void sortResultBySignalSTR(std::vector<ScanResult_t>* scanInfo)
 {
 	// disp connected ssid first
-	if (isConnected)
+	if (getConnectionStatus())
 	{
 		for (vector<ScanResult_t>::iterator it = scanInfo->begin(); it != scanInfo->end(); it++){
 			if (it->bConnected)
@@ -153,28 +145,10 @@ static void updateAnimation() {
     mTextview_loadingPtr->setBackgroundPic(path);
 }
 
-class WifiLoadThread : public Thread {
-protected:
-	virtual bool threadLoop() {
-		if (isWifiSupport && isWifiEnable)
-		{
-			printf("load thread running\n");
-			if (isLoading)
-				updateAnimation();
-			else
-			{
-				printf("scan done, isloading is %d\n", isLoading);
-				return false;
-			}
-		}
-		return true;
-	}
-};
-
 class WifiScanThread : public Thread {
 protected:
 	virtual bool threadLoop() {
-		if (isWifiSupport && isWifiEnable)
+		if (getWifiSupportStatus() && getWifiEnableStatus())
 		{
 			//WIFI_LOG("scan thread running\n");
 			if (!nTryCnt)
@@ -226,8 +200,9 @@ protected:
 			if(status.stStaStatus.state == WPA_COMPLETED)
 			{
 				WIFI_LOG("wifi connect success: %s %s\n", status.stStaStatus.ip_address, status.stStaStatus.ssid);
-				isConnected = true;
-				isSsidSaved = true;
+				setConnectionStatus(true);
+				setSsidSavedStatus(true);
+				setWlanHandle(wlanHdl);	// connect exist ssid, not need to save wlan handle
 
 				// check if status changed in ap list, if changed, refresh listview
 				lLock.lock();
@@ -308,16 +283,17 @@ static void onUI_show() {
 	WIFI_LOG("onUI_show\n");
 	nTryCnt = 0;
 
-	if (isWifiSupport)
+	if (getWifiSupportStatus())
 	{
+		bool bWifiEnable = getWifiEnableStatus();
 		mTextviewNotSupportPtr->setVisible(FALSE);
 		mTextviewWifiPtr->setVisible(TRUE);
 		mButtonWifiswPtr->setVisible(TRUE);
-		mButtonWifiswPtr->setSelected(isWifiEnable);
-		mTextviewWifiListPtr->setVisible(isWifiEnable);
-		mTextview_loadingPtr->setVisible(isWifiEnable);
+		mButtonWifiswPtr->setSelected(bWifiEnable);
+		mTextviewWifiListPtr->setVisible(bWifiEnable);
+		mTextview_loadingPtr->setVisible(bWifiEnable);
 
-		if (isWifiEnable)
+		if (bWifiEnable)
 		{
 			isLoading = true;
 			loadingStatus = true;
@@ -442,20 +418,22 @@ static bool onnetworkSettingActivityTouchEvent(const MotionEvent &ev) {
 static bool onButtonClick_ButtonWifisw(ZKButton *pButton) {
     //LOGD(" ButtonClick ButtonWifisw !!!\n");
 	WIFI_LOG("onButtonClick_ButtonWifisw\n");
-
-	//BOOL bWifiEnable = FALSE;
+	BOOL bWifiEnable = FALSE;
 	pButton->setSelected(!pButton->isSelected());
-	isWifiEnable = pButton->isSelected();
-	mTextviewWifiListPtr->setVisible(isWifiEnable);
-	mTextview_loadingPtr->setVisible(isWifiEnable);
+	wlanHdl = getWlanHandle();
+	bWifiEnable = pButton->isSelected();
+	setWifiEnableStatus(bWifiEnable);
+	mTextviewWifiListPtr->setVisible(bWifiEnable);
+	mTextview_loadingPtr->setVisible(bWifiEnable);
 	mListviewNetworkPtr->setVisible(FALSE);
 
-	if (isWifiEnable)
+	if (bWifiEnable)
 	{
-		if (!isConnected && isSsidSaved)
+		if (!getConnectionStatus() && getSsidSavedStatus())
 		{
 			// try to connect saved ssid
-			MI_WLAN_Connect(&wlanHdl, &stConnectParam);
+			MI_WLAN_ConnectParam_t *pConnParam = getConnectParam();
+			MI_WLAN_Connect(&wlanHdl, pConnParam);
 			wifiConnectThread.setCycleCnt(20, 500);
 			WIFI_LOG("start conn thread\n");
 			wifiConnectThread.run("wifiConnect");
@@ -478,8 +456,9 @@ static bool onButtonClick_ButtonWifisw(ZKButton *pButton) {
 	{
 		if (wifiScanThread.isRunning())
 		{
-			WIFI_LOG("wait thread exit\n");
+			WIFI_LOG("wait thread exit, bgTime=%llu ms\n", getSysTime());
 			wifiScanThread.requestExitAndWait();
+			WIFI_LOG("wait thread exit, endTime=%llu ms\n", getSysTime());
 		}
 
 		unregisterPrivTimer(&isRegistered, TIMER_LOADING);
@@ -487,13 +466,16 @@ static bool onButtonClick_ButtonWifisw(ZKButton *pButton) {
 		if (wlanHdl != -1)
 		{
 			MI_WLAN_Disconnect(wlanHdl);
-			wlanHdl = -1;
-			isConnected = false;
+			// wlanHdl = -1;
+			setConnectionStatus(false);
+			//setWlanHandle(-1);
 		}
 
+		WIFI_LOG("clear lv, bgTime=%llu\n", getSysTime());
 		lLock.lock();
 		sScanResult.clear();
 		lLock.unlock();
+		WIFI_LOG("clear lv, endTime=%llu\n", getSysTime());
 	}
 
     return false;
@@ -553,10 +535,11 @@ static void onListItemClick_ListviewNetwork(ZKListView *pListView, int index, in
 
 	unregisterPrivTimer(&isRegistered, TIMER_LOADING);
 
-	if (isConnected && !index)
+	if (getConnectionStatus() && !index)
 	{
+		MI_WLAN_ConnectParam_t *pConnParam = getConnectParam();
 		// show connected info
-		if (!strcmp(scanRes.ssid, (char*)stConnectParam.au8SSId))
+		if (!strcmp(scanRes.ssid, (char*)pConnParam->au8SSId))
 			EASYUICONTEXT->openActivity("networkSetting2Activity");
 		else
 		{

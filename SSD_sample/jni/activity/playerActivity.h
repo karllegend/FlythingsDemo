@@ -1,8 +1,8 @@
 /***********************************************
 /gen auto by zuitools
 ***********************************************/
-#ifndef __MAINACTIVITY_H__
-#define __MAINACTIVITY_H__
+#ifndef __PLAYERACTIVITY_H__
+#define __PLAYERACTIVITY_H__
 
 
 #include "app/Activity.h"
@@ -24,15 +24,11 @@
 #include "control/ZKEditText.h"
 #include "control/ZKVideoView.h"
 #include "window/ZKSlideWindow.h"
-#include <dlfcn.h>
 
 /*TAG:Macro宏ID*/
-#define ID_MAIN_Digitalclock2    93002
-#define ID_MAIN_Window2    110002
-#define ID_MAIN_Slidewindow1    30001
 /*TAG:Macro宏ID END*/
 
-class mainActivity : public Activity, 
+class playerActivity : public Activity, 
                      public ZKSeekBar::ISeekBarChangeListener, 
                      public ZKListView::IItemClickListener,
                      public ZKListView::AbsListAdapter,
@@ -42,8 +38,8 @@ class mainActivity : public Activity,
                      public ZKVideoView::IVideoPlayerMessageListener
 {
 public:
-    mainActivity();
-    virtual ~mainActivity();
+    playerActivity();
+    virtual ~playerActivity();
 
     /**
      * 注册定时器
@@ -83,7 +79,7 @@ protected:
     void rigesterActivityTimer();
 
     virtual void onVideoPlayerMessage(ZKVideoView *pVideoView, int msg);
-    void videoLoopPlayback(ZKVideoView *pVideoView, int msg, int callbackTabIndex);
+    void videoLoopPlayback(ZKVideoView *pVideoView, int msg, size_t callbackTabIndex);
     void startVideoLoopPlayback();
     void stopVideoLoopPlayback();
     bool parseVideoFileList(const char *pFileListPath, std::vector<string>& mediaFileList);

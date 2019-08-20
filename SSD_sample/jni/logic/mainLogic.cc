@@ -30,15 +30,15 @@
 */
 #include "mi_common_datatype.h"
 #include "mi_wlan.h"
+#include "wifiInfo.h"
+#include <dlfcn.h>
 
+static bool isWifiSupport = true;
+static bool isWifiEnable = true;
+static bool isSsidSaved = true;	// if exsit saved ssid&passwd
+static WLAN_HANDLE wlanHdl = -1;
+static MI_WLAN_ConnectParam_t stConnectParam = {E_MI_WLAN_SECURITY_WPA, "SKY", "12345678", 5000};
 
-
-bool isWifiSupport = true;
-bool isWifiEnable = true;
-bool isSsidSaved = true;	// if exsit saved ssid&passwd
-bool isConnected = false;	// if connected
-WLAN_HANDLE wlanHdl = -1;
-MI_WLAN_ConnectParam_t stConnectParam = {E_MI_WLAN_SECURITY_WPA2, "SKY", "12345678", 5000};
 static MI_WLAN_OpenParams_t stOpenParam = {E_MI_WLAN_NETWORKTYPE_INFRA};
 static MI_WLAN_InitParams_t stParm = {"/config/wifi/wlan.json"};
 static MI_WLAN_Status_t  status;
@@ -70,7 +70,8 @@ protected:
 
 				if(status.stStaStatus.state == WPA_COMPLETED)
 				{
-					isConnected = true;
+					setConnectionStatus(true);
+					setWlanHandle(wlanHdl);	// auto connect, not need to save wlan handle
 					printf("%s %s\n", status.stStaStatus.ip_address, status.stStaStatus.ssid);
 					return false;
 				}
@@ -106,7 +107,17 @@ static void onUI_init(){
 	EASYUICONTEXT->hideStatusBar();
 
 	// get wifi status from config file
+	initWifiConfig();
+	isWifiSupport = getWifiSupportStatus();
+	isWifiEnable = getWifiEnableStatus();
+
+	//isSsidSaved 替换为 wlanHandle
+
 	// set isWifiSupport, isWifiEnable, isSsidSaved, stConnectParam
+	setWifiSupportStatus(isWifiSupport);
+	setWifiEnableStatus(isWifiEnable);
+	setSsidSavedStatus(isSsidSaved);
+	saveConnectParam(&stConnectParam);
 
 	if (isWifiSupport)
 	{
@@ -121,12 +132,11 @@ static void onUI_quit() {
 	if (wlanHdl != -1)
 	{
 		MI_WLAN_Disconnect(wlanHdl);
-		wlanHdl = -1;
+		//wlanHdl = -1;
 	}
 	MI_WLAN_Close();
 	sleep(3);
 	MI_WLAN_DeInit();
-
 }
 
 
@@ -162,9 +172,19 @@ const char* IconTab[]={
 		"uartActivity",
 		"painterActivity",
 		"networkSettingActivity",
+		"playlistActivity",
 };
 
 static void onSlideItemClick_Slidewindow1(ZKSlideWindow *pSlideWindow, int index) {
+	if (!strcmp(IconTab[index], "networkSettingActivity"))
+	{
+		if (!dlopen("libmi_wlan.so", RTLD_NOW))
+		{
+			printf("libmi_wlan.so not exist\n");
+			return;
+		}
+	}
+
 	EASYUICONTEXT->openActivity(IconTab[index]);
 	EASYUICONTEXT->closeActivity("mainActivity");
 }

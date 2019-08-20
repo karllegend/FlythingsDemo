@@ -703,7 +703,7 @@ static MI_S32 SSTAR_VoiceAnalyzeInit()
             // skip the same cmd
             if(strcmp(szCmdBuf, szCmdBufTemp) != 0)
             {
-            	AD_LOG("%s %d\n", szCmdBuf, nCmdNum);
+            	AD_LOG("%s %d\n", szCmdBuf, i);
                 memset(szCmdBufTemp, 0, sizeof(szCmdBufTemp));
                 strcpy(szCmdBufTemp, szCmdBuf);
 
@@ -892,8 +892,6 @@ MI_S32 SSTAR_VoiceDetectGetWordList(WordInfo_t *pWordList, int cnt)
                     strcpy((pWordList+i)->szWord, pos->szWord);
                     pWordList->index = pos->index;
                     i++;
-
-                    
                 }
                 else
                     return i;
