@@ -12,19 +12,10 @@
 #include "mi_wlan.h"
 
 
-typedef struct
-{
-	char id[8];
-	char ssid[128];
-	char passwd[64];
-} WIFI_CONFIG_T;
-
 bool getWifiSupportStatus();
 void setWifiSupportStatus(bool enable);
 bool getWifiEnableStatus();
 void setWifiEnableStatus(bool enable);
-bool getSsidSavedStatus();
-void setSsidSavedStatus(bool enable);
 bool getConnectionStatus();
 void setConnectionStatus(bool enable);
 WLAN_HANDLE getWlanHandle();

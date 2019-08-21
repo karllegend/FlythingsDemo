@@ -33,9 +33,9 @@
 #include "mi_wlan.h"
 #include "wifiInfo.h"
 
+
 static MI_WLAN_ConnectParam_t stConnectInfo;
 static MI_WLAN_Status_t status;
-static WLAN_HANDLE wlanHdl = -1;
 
 class WifiChangeConnThread : public Thread {
 public:
@@ -51,10 +51,6 @@ protected:
 			{
 				printf("wifi connect success: %s %s\n", status.stStaStatus.ip_address, status.stStaStatus.ssid);
 				setConnectionStatus(true);
-				setSsidSavedStatus(true);
-				setWlanHandle(wlanHdl);
-				saveConnectParam(&stConnectInfo);
-				// save to config file
 				return false;
 			}
 
@@ -102,7 +98,7 @@ static void onUI_intent(const Intent *intentPtr) {
     	mTextview_connect_ssidPtr->setText(ssid);
 
     	memset(&stConnectInfo, 0, sizeof(MI_WLAN_ConnectParam_t));
-    	stConnectInfo.eSecurity = E_MI_WLAN_SECURITY_WPA2;
+    	stConnectInfo.eSecurity = E_MI_WLAN_SECURITY_WPA;
     	stConnectInfo.OverTimeMs = 5000;
     	memcpy(stConnectInfo.au8SSId, ssid.c_str(), strlen(ssid.c_str()));
     }
@@ -196,7 +192,20 @@ static bool onButtonClick_Buttonbg(ZKButton *pButton) {
 
 static bool onButtonClick_Button_connect_conn(ZKButton *pButton) {
     //LOGD(" ButtonClick Button_connect_conn !!!\n");
+	MI_WLAN_ConnectParam_t *pConnParam = getConnectParam();
+	WLAN_HANDLE wlanHdl = -1;
+
+	if (!strcmp((char*)pConnParam->au8SSId, (char*)stConnectInfo.au8SSId))
+		wlanHdl = getWlanHandle();
+
+	printf("conn param: id=%d, ssid=%s, passwd=%s\n", wlanHdl, (char*)pConnParam->au8SSId, (char*)pConnParam->au8Password);
 	MI_WLAN_Connect(&wlanHdl, &stConnectInfo);
+	printf("current wlan handle is %d\n", wlanHdl);
+
+	setWlanHandle(wlanHdl);
+	saveConnectParam(&stConnectInfo);
+	saveWifiConfig();
+
 	wifiConnectThread.setCycleCnt(20, 500);
 	wifiConnectThread.run();
 	EASYUICONTEXT->closeActivity("networkSetting3Activity");

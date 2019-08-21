@@ -193,7 +193,6 @@ static bool onButtonClick_Button_connected_disconn(ZKButton *pButton) {
     //LOGD(" ButtonClick Button_connected_disconn !!!\n");
 	printf("page2 disconnect\n");
 	MI_WLAN_Disconnect(getWlanHandle());
-	//setWlanHandle(-1);
 	setConnectionStatus(false);
 
 	//EASYUICONTEXT->goBack();

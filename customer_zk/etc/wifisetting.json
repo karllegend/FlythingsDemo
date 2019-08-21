@@ -1,7 +1,11 @@
 {
 	"wifi":	{
-		"id":	"0",
-		"ssid":	"SKY",
-        "passwd": "12345678"
+		"isSupport":	true,
+		"isEnable":	false,
+		"param":	{
+			"id":	"0",
+			"ssid":	"SKY",
+			"passwd":	"12345678"
+		}
 	}
 }

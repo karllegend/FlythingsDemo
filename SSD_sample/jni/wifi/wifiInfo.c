@@ -15,11 +15,9 @@
 
 static bool isWifiSupport = true;
 static bool isWifiEnable = true;
-static bool isSsidSaved = false;	// if exsit saved ssid&passwd
 static bool isConnected = false;
 static WLAN_HANDLE wlanHdl = -1;
 static MI_WLAN_ConnectParam_t stConnectParam;	// abandon
-static WIFI_CONFIG_T config = {"0", "SKY", "12345678"};
 
 static void *malloc_fn(size_t sz)
 {
@@ -49,16 +47,6 @@ bool getWifiEnableStatus()
 void setWifiEnableStatus(bool enable)
 {
 	isWifiEnable = enable;
-}
-
-bool getSsidSavedStatus()
-{
-	return isSsidSaved;
-}
-
-void setSsidSavedStatus(bool enable)
-{
-	isSsidSaved = enable;
 }
 
 bool getConnectionStatus()
@@ -99,8 +87,13 @@ int initWifiConfig()
 	char * pConfData = NULL;
 	cJSON * root;
 	cJSON * obj;
+	cJSON * param;
 	cJSON * item;
 	cJSON_Hooks hooks;
+
+	memset(&stConnectParam, 0, sizeof(MI_WLAN_ConnectParam_t));
+	stConnectParam.eSecurity = E_MI_WLAN_SECURITY_WPA;
+	stConnectParam.OverTimeMs = 5000;
 
 	fp = fopen(WIFI_SETTING_CFG,"r+");
 	if (!fp)
@@ -108,6 +101,8 @@ int initWifiConfig()
 		printf("should open json file first\n");
 		return -1;
 	}
+
+	printf("open %s success\n", WIFI_SETTING_CFG);
 
 	hooks.free_fn = free_fn;
 	hooks.malloc_fn = malloc_fn;
@@ -124,18 +119,41 @@ int initWifiConfig()
 	// read config
 	cJSON_Minify(pConfData);
 	root = cJSON_Parse(pConfData);
+	if (!root)
+		return -1;
+
 	obj = cJSON_GetObjectItem(root, "wifi");
-	item = cJSON_GetObjectItem(obj, "id");
-	if(item)
+	if (!obj)
+		return -1;
+
+	printf("parse json success\n");
+	item = cJSON_GetObjectItem(obj, "isSupport");
+	if (item)
+		isWifiSupport = cJSON_IsTrue(item);
+	printf("isSupport: %d\n", isWifiSupport);
+
+	item = cJSON_GetObjectItem(obj, "isEnable");
+	if (item)
+		isWifiEnable = cJSON_IsTrue(item);
+	printf("isSupport: %d\n", isWifiEnable);
+
+	param = cJSON_GetObjectItem(obj, "param");
+	if (param)
 	{
-		strcpy(config.id, cJSON_GetStringValue(item));
-		item = cJSON_GetObjectItem(obj, "ssid");
-		strcpy(config.ssid, cJSON_GetStringValue(item));
-		item = cJSON_GetObjectItem(obj, "passwd");
-		strcpy(config.passwd, cJSON_GetStringValue(item));
+		item = cJSON_GetObjectItem(param, "id");
+		if(item)
+		{
+			wlanHdl = (WLAN_HANDLE)atoi(cJSON_GetStringValue(item));
+			item = cJSON_GetObjectItem(param, "ssid");
+			strcpy((char*)stConnectParam.au8SSId, cJSON_GetStringValue(item));
+			item = cJSON_GetObjectItem(param, "passwd");
+			strcpy((char*)stConnectParam.au8Password, cJSON_GetStringValue(item));
+		}
 	}
 
-	printf("get id:%s ssid:%s passwd:%s\n", config.id, config.ssid, config.passwd);
+	printf("isSupport:%d isEnable:%d id:%d ssid:%s passwd:%s\n", isWifiSupport, isWifiEnable, wlanHdl, (char*)stConnectParam.au8SSId, (char*)stConnectParam.au8Password);
+
+	free(pConfData);
 	return 0;
 }
 
@@ -143,8 +161,10 @@ int saveWifiConfig()
 {
 	FILE* fp = NULL;
 	cJSON * root;
+	cJSON * param;
 	cJSON * obj;
 	cJSON * item;
+	char id[8];
 
 	fp = fopen(WIFI_SETTING_CFG,"w+");
 	if (!fp)
@@ -153,16 +173,21 @@ int saveWifiConfig()
 		return -1;
 	}
 
+	printf("open %s success\n", WIFI_SETTING_CFG);
 	root = cJSON_CreateObject();
 	obj = cJSON_AddObjectToObject(root, "wifi");
-	item = cJSON_AddStringToObject(obj, "id", "100");
-	item = cJSON_AddStringToObject(obj, "ssid", "test");
-	item = cJSON_AddStringToObject(obj, "passwd", "ABCD");
+	item = cJSON_AddBoolToObject(obj, "isSupport", isWifiSupport);
+	item = cJSON_AddBoolToObject(obj, "isEnable", isWifiEnable);
+	param = cJSON_AddObjectToObject(obj, "param");
+	memset(id, 0, sizeof(id));
+	sprintf(id, "%d", wlanHdl);
+	item = cJSON_AddStringToObject(param, "id", id);
+	item = cJSON_AddStringToObject(param, "ssid", (char*)stConnectParam.au8SSId);
+	item = cJSON_AddStringToObject(param, "passwd", (char*)stConnectParam.au8Password);
 	printf("%s %d %s \n",__FUNCTION__,__LINE__,cJSON_Print(root));
 
 	fseek(fp, 0, SEEK_SET);
 	fwrite(cJSON_Print(root),strlen(cJSON_Print(root)),1,fp);
-	//fdatasync(fileno(fp));
 	fclose(fp);
 	fp = NULL;
 

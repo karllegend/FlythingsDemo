@@ -77,6 +77,7 @@ unsigned long long getSysTime()
 static void saveScanResult(MI_WLAN_ScanResult_t *pScanResult, std::vector<ScanResult_t>* scanInfo)
 {
 	int cnt = pScanResult->u8APNumber;
+	MI_WLAN_ConnectParam_t *pConnParam = getConnectParam();
 
 	scanInfo->clear();
 
@@ -88,7 +89,7 @@ static void saveScanResult(MI_WLAN_ScanResult_t *pScanResult, std::vector<ScanRe
 		if (pSsid && strcmp(pSsid, "\"\""))
 		{
 			int len = strlen(pSsid);
-			MI_WLAN_ConnectParam_t *pConnParam = getConnectParam();
+
 			strncpy(stScanRes.ssid, pSsid+1, len-2);
 			strcpy(stScanRes.mac, (char*)pScanResult->stAPInfo[i].au8Mac);
 			stScanRes.bEncrypt = pScanResult->stAPInfo[i].bEncryptKey;
@@ -201,8 +202,6 @@ protected:
 			{
 				WIFI_LOG("wifi connect success: %s %s\n", status.stStaStatus.ip_address, status.stStaStatus.ssid);
 				setConnectionStatus(true);
-				setSsidSavedStatus(true);
-				setWlanHandle(wlanHdl);	// connect exist ssid, not need to save wlan handle
 
 				// check if status changed in ap list, if changed, refresh listview
 				lLock.lock();
@@ -429,10 +428,11 @@ static bool onButtonClick_ButtonWifisw(ZKButton *pButton) {
 
 	if (bWifiEnable)
 	{
-		if (!getConnectionStatus() && getSsidSavedStatus())
+		if (!getConnectionStatus() && getWlanHandle() != -1)
 		{
 			// try to connect saved ssid
 			MI_WLAN_ConnectParam_t *pConnParam = getConnectParam();
+			printf("conn param: id=%d, ssid=%s, passwd=%s\n", wlanHdl, (char*)pConnParam->au8SSId, (char*)pConnParam->au8Password);
 			MI_WLAN_Connect(&wlanHdl, pConnParam);
 			wifiConnectThread.setCycleCnt(20, 500);
 			WIFI_LOG("start conn thread\n");
@@ -466,9 +466,7 @@ static bool onButtonClick_ButtonWifisw(ZKButton *pButton) {
 		if (wlanHdl != -1)
 		{
 			MI_WLAN_Disconnect(wlanHdl);
-			// wlanHdl = -1;
 			setConnectionStatus(false);
-			//setWlanHandle(-1);
 		}
 
 		WIFI_LOG("clear lv, bgTime=%llu\n", getSysTime());
@@ -477,6 +475,9 @@ static bool onButtonClick_ButtonWifisw(ZKButton *pButton) {
 		lLock.unlock();
 		WIFI_LOG("clear lv, endTime=%llu\n", getSysTime());
 	}
+
+	setWifiEnableStatus(bWifiEnable);
+	saveWifiConfig();
 
     return false;
 }
@@ -541,7 +542,7 @@ static void onListItemClick_ListviewNetwork(ZKListView *pListView, int index, in
 		// show connected info
 		if (!strcmp(scanRes.ssid, (char*)pConnParam->au8SSId))
 			EASYUICONTEXT->openActivity("networkSetting2Activity");
-		else
+		else	// this case is not exist
 		{
 			Intent* intent = new Intent();
 			intent->putExtra("ssid", string(scanRes.ssid));

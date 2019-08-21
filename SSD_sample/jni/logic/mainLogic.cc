@@ -33,17 +33,14 @@
 #include "wifiInfo.h"
 #include <dlfcn.h>
 
+
 static bool isWifiSupport = true;
 static bool isWifiEnable = true;
-static bool isSsidSaved = true;	// if exsit saved ssid&passwd
 static WLAN_HANDLE wlanHdl = -1;
-static MI_WLAN_ConnectParam_t stConnectParam = {E_MI_WLAN_SECURITY_WPA, "SKY", "12345678", 5000};
-
 static MI_WLAN_OpenParams_t stOpenParam = {E_MI_WLAN_NETWORKTYPE_INFRA};
 static MI_WLAN_InitParams_t stParm = {"/config/wifi/wlan.json"};
 static MI_WLAN_Status_t  status;
 static bool isBootupConnect = false;
-// read from wlan config
 
 class WifiSetupThread : public Thread {
 public:
@@ -53,16 +50,21 @@ protected:
 	virtual bool threadLoop() {
 		if (!isBootupConnect)
 		{
+			MI_WLAN_ConnectParam_t *pConnParam = getConnectParam();
 			MI_WLAN_Init(&stParm);
 			MI_WLAN_Open(&stOpenParam);
 
-			if (isWifiEnable && isSsidSaved)
-				MI_WLAN_Connect(&wlanHdl, &stConnectParam);
+			if (isWifiEnable && wlanHdl != -1)
+			{
+				printf("conn param: id=%d, ssid=%s, passwd=%s\n", wlanHdl, (char*)pConnParam->au8SSId, (char*)pConnParam->au8Password);
+				MI_WLAN_Connect(&wlanHdl, pConnParam); // save after connect
+				printf("save conn param: id=%d, ssid=%s, passwd=%s\n", wlanHdl);
+			}
 
 			isBootupConnect = true;
 		}
 
-		if (isWifiEnable && isSsidSaved)
+		if (isWifiEnable && wlanHdl != -1)
 		{
 			if (nCycleCnt-- > 0)
 			{
@@ -71,7 +73,6 @@ protected:
 				if(status.stStaStatus.state == WPA_COMPLETED)
 				{
 					setConnectionStatus(true);
-					setWlanHandle(wlanHdl);	// auto connect, not need to save wlan handle
 					printf("%s %s\n", status.stStaStatus.ip_address, status.stStaStatus.ssid);
 					return false;
 				}
@@ -110,14 +111,7 @@ static void onUI_init(){
 	initWifiConfig();
 	isWifiSupport = getWifiSupportStatus();
 	isWifiEnable = getWifiEnableStatus();
-
-	//isSsidSaved 替换为 wlanHandle
-
-	// set isWifiSupport, isWifiEnable, isSsidSaved, stConnectParam
-	setWifiSupportStatus(isWifiSupport);
-	setWifiEnableStatus(isWifiEnable);
-	setSsidSavedStatus(isSsidSaved);
-	saveConnectParam(&stConnectParam);
+	wlanHdl = getWlanHandle();
 
 	if (isWifiSupport)
 	{
@@ -132,8 +126,8 @@ static void onUI_quit() {
 	if (wlanHdl != -1)
 	{
 		MI_WLAN_Disconnect(wlanHdl);
-		//wlanHdl = -1;
 	}
+
 	MI_WLAN_Close();
 	sleep(3);
 	MI_WLAN_DeInit();
