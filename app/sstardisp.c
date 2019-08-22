@@ -27,15 +27,23 @@
 
 // loacl play res
 #if UI_1024_600
-#define LOCAL_VIDEO_W  822
-#define LOCAL_VIDEO_H  464
-#define LOCAL_VIDEO_X  100
-#define LOCAL_VIDEO_Y  60
+//#define LOCAL_VIDEO_W  822
+//#define LOCAL_VIDEO_H  464
+//#define LOCAL_VIDEO_X  100
+//#define LOCAL_VIDEO_Y  60
+#define LOCAL_VIDEO_W  1024
+#define LOCAL_VIDEO_H  600
+#define LOCAL_VIDEO_X  0
+#define LOCAL_VIDEO_Y  0
 #else
-#define LOCAL_VIDEO_W  640
-#define LOCAL_VIDEO_H  360
-#define LOCAL_VIDEO_X  100
-#define LOCAL_VIDEO_Y  60
+//#define LOCAL_VIDEO_W  640
+//#define LOCAL_VIDEO_H  360
+//#define LOCAL_VIDEO_X  100
+//#define LOCAL_VIDEO_Y  60
+#define LOCAL_VIDEO_W  800
+#define LOCAL_VIDEO_H  480
+#define LOCAL_VIDEO_X  0
+#define LOCAL_VIDEO_Y  0
 #endif
 
 #if defined(__cplusplus)||defined(c_plusplus)
