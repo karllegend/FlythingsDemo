@@ -9,20 +9,34 @@
 #include "mi_panel.h"
 #include "mi_disp_datatype.h"
 #include "mi_disp.h"
+
+
+#define UI_1024_600 0
+#define USE_MIPI    0
+
+
+#if UI_1024_600
 #include "SAT070CP50_1024x600.h"
-//#include "SAT070AT50_800x480.h"
+#else
+#if USE_MIPI
+#include "ST7701S_480x480_MIPI.h"
+#else
+#include "SAT070AT50_800x480.h"
+#endif
+#endif
 
-#define UI_1024_600
-
-#define VIDEO_DISP_X 80
-#define VIDEO_DISP_Y 60
-#define VIDEO_DISP_W 640
-#define VIDEO_DISP_H 360
-
-#define VIDEO_DISP_1024_X 100
-#define VIDEO_DISP_1024_Y 60
-#define VIDEO_DISP_1024_W 704
-#define VIDEO_DISP_1024_H 480
+// loacl play res
+#if UI_1024_600
+#define LOCAL_VIDEO_W  822
+#define LOCAL_VIDEO_H  464
+#define LOCAL_VIDEO_X  100
+#define LOCAL_VIDEO_Y  60
+#else
+#define LOCAL_VIDEO_W  640
+#define LOCAL_VIDEO_H  360
+#define LOCAL_VIDEO_X  100
+#define LOCAL_VIDEO_Y  60
+#endif
 
 #if defined(__cplusplus)||defined(c_plusplus)
 extern "C"{
@@ -54,23 +68,19 @@ int sstar_disp_init(MI_DISP_PubAttr_t *pstDispPubAttr)
         pstDispPubAttr->stSyncInfo.u32FrameRate = stPanelParam.u16DCLK * 1000000 / (stPanelParam.u16HTotal * stPanelParam.u16VTotal);
         pstDispPubAttr->eIntfSync = E_MI_DISP_OUTPUT_USER;
         pstDispPubAttr->eIntfType = E_MI_DISP_INTF_LCD;
-        eLinkType = E_MI_PNL_LINK_TTL;
+#if USE_MIPI
+		eLinkType = E_MI_PNL_LINK_MIPI_DSI;
+#else
+        //eLinkType = E_MI_PNL_LINK_TTL;
+#endif
     }
-    #ifdef UI_1024_600
-        stInputPortAttr.u16SrcWidth = 822;//VIDEO_DISP_1024_W;
-        stInputPortAttr.u16SrcHeight = 464;//VIDEO_DISP_1024_H;
-        stInputPortAttr.stDispWin.u16X = VIDEO_DISP_1024_X;
-        stInputPortAttr.stDispWin.u16Y = VIDEO_DISP_1024_Y;
-        stInputPortAttr.stDispWin.u16Width = 822;//VIDEO_DISP_1024_W;
-        stInputPortAttr.stDispWin.u16Height = 464;//VIDEO_DISP_1024_H;
-    #else
-        stInputPortAttr.u16SrcWidth = VIDEO_DISP_1024_W;
-        stInputPortAttr.u16SrcHeight = VIDEO_DISP_1024_H;
-        stInputPortAttr.stDispWin.u16X = VIDEO_DISP_1024_X;
-        stInputPortAttr.stDispWin.u16Y = VIDEO_DISP_1024_Y;
-        stInputPortAttr.stDispWin.u16Width = VIDEO_DISP_1024_W;
-        stInputPortAttr.stDispWin.u16Height = VIDEO_DISP_1024_H;
-    #endif
+
+    stInputPortAttr.u16SrcWidth = LOCAL_VIDEO_W;
+    stInputPortAttr.u16SrcHeight = LOCAL_VIDEO_H;
+    stInputPortAttr.stDispWin.u16X = LOCAL_VIDEO_X;
+    stInputPortAttr.stDispWin.u16Y = LOCAL_VIDEO_Y;
+    stInputPortAttr.stDispWin.u16Width = LOCAL_VIDEO_W;
+    stInputPortAttr.stDispWin.u16Height = LOCAL_VIDEO_H;
 
     MI_DISP_SetPubAttr(0, pstDispPubAttr);
     MI_DISP_Enable(0);
@@ -87,7 +97,9 @@ int sstar_disp_init(MI_DISP_PubAttr_t *pstDispPubAttr)
         MI_PANEL_SetPanelParam(&stPanelParam);
         if(eLinkType == E_MI_PNL_LINK_MIPI_DSI)
         {
-            //MI_PANEL_SetMipiDsiConfig(&stMipiDsiConfig);
+#if USE_MIPI
+            MI_PANEL_SetMipiDsiConfig(&stMipiDsiConfig);
+#endif
         }
     }
     return 0;
