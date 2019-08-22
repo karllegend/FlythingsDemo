@@ -19,19 +19,25 @@
 #define DMA_BUF_SIZE_32K    (32000)
 #define DMA_BUF_SIZE_48K    (48000)
 
-#define UI_1024_600
+#define UI_1024_600		0
 static int g_VdecRun = FALSE;
 static pthread_t g_VdeStream_tid = 0;
 
 #define MI_U32VALUE(pu8Data, index) (pu8Data[index]<<24)|(pu8Data[index+1]<<16)|(pu8Data[index+2]<<8)|(pu8Data[index+3])
 
-#define VIDEO_DISP_W 640
-#define VIDEO_DISP_H 360
-
-#define VIDEO_DISP_1024_W 822
+#if UI_1024_600
+//#define VIDEO_DISP_1024_W 822
+#define VIDEO_DISP_W 1024
 //real1024 704
-#define VIDEO_DISP_1024_H 464
+//#define VIDEO_DISP_1024_H 464
+#define VIDEO_DISP_H 600
 //real1024 480
+#else
+//#define VIDEO_DISP_W 640
+#define VIDEO_DISP_W 800
+//#define VIDEO_DISP_H 360
+#define VIDEO_DISP_H 480
+#endif
 
 #define VIDEO_STREAM_W 704
 #define VIDEO_STREAM_H 480
@@ -704,11 +710,12 @@ MI_S32 SSTAR_DestroyVdecChannel(MI_S32 s32VdecChn)
 MI_S32 SSTAR_CreateVdec2DispPipe(MI_S32 s32VdecChn, MI_S32 s32DivpChn, MI_U32 u32VdecW, MI_U32 u32VdecH, MI_S32 s32CodecType)
 {
     ST_Rect_T stCrop= {0, 0, 0, 0};
-    #ifdef UI_1024_600
-        SSTAR_CreateVdecChannel(s32VdecChn, s32CodecType, u32VdecW, u32VdecH, VIDEO_DISP_1024_W, VIDEO_DISP_1024_H);
-    #else
-        SSTAR_CreateVdecChannel(s32VdecChn, s32CodecType, u32VdecW, u32VdecH, VIDEO_DISP_W, VIDEO_DISP_H);
-    #endif
+//    #ifdef UI_1024_600
+//        SSTAR_CreateVdecChannel(s32VdecChn, s32CodecType, u32VdecW, u32VdecH, VIDEO_DISP_1024_W, VIDEO_DISP_1024_H);
+//    #else
+//        SSTAR_CreateVdecChannel(s32VdecChn, s32CodecType, u32VdecW, u32VdecH, VIDEO_DISP_W, VIDEO_DISP_H);
+//    #endif
+    SSTAR_CreateVdecChannel(s32VdecChn, s32CodecType, u32VdecW, u32VdecH, VIDEO_DISP_W, VIDEO_DISP_H);
     MI_DISP_EnableInputPort(0, 0);
     SSTAR_ModuleBind(E_MI_MODULE_ID_VDEC, 0, s32VdecChn, 0,
                     E_MI_MODULE_ID_DISP, 0, 0, 0); //DIVP->DISP
