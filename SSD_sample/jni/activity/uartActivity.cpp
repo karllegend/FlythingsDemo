@@ -181,17 +181,17 @@ void uartActivity::onClick(ZKBase *pBase) {
 }
 
 void uartActivity::onResume() {
-	//Activity::onResume();
-	//EASYUICONTEXT->registerGlobalTouchListener(this);
-	//startVideoLoopPlayback();
-	//onUI_show();
+	Activity::onResume();
+	EASYUICONTEXT->registerGlobalTouchListener(this);
+	startVideoLoopPlayback();
+	onUI_show();
 }
 
 void uartActivity::onPause() {
-	//Activity::onPause();
-	//EASYUICONTEXT->unregisterGlobalTouchListener(this);
-	//stopVideoLoopPlayback();
-	//onUI_hide();
+	Activity::onPause();
+	EASYUICONTEXT->unregisterGlobalTouchListener(this);
+	stopVideoLoopPlayback();
+	onUI_hide();
 }
 
 void uartActivity::onIntent(const Intent *intentPtr) {

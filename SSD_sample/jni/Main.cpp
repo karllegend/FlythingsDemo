@@ -7,7 +7,9 @@ extern "C" {
 
 void onEasyUIInit(EasyUIContext *pContext) {
 	// 初始化时打开串口
-	UARTCONTEXT->openUart(CONFIGMANAGER->getUartName().c_str(), CONFIGMANAGER->getUartBaudRate());
+	printf("init uart %s %d\n", CONFIGMANAGER->getUartName().c_str(), CONFIGMANAGER->getUartBaudRate());
+	//UARTCONTEXT->openUart(CONFIGMANAGER->getUartName().c_str(), CONFIGMANAGER->getUartBaudRate());
+	UARTCONTEXT->openUart("/dev/ttyS1", 115200);
 }
 
 void onEasyUIDeinit(EasyUIContext *pContext) {

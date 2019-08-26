@@ -52,25 +52,53 @@ UartContext::~UartContext() {
 bool UartContext::openUart(const char *pFileName, UINT baudRate) {
 	LOGD("openUart pFileName = %s, baudRate = %d\n", pFileName, baudRate);
 	mUartID = open(pFileName, O_RDWR|O_NOCTTY);
-
+	printf("open uart id = %d\n", mUartID);
 	if (mUartID <= 0) {
 		mIsOpen = false;
 	} else {
-		struct termios oldtio = { 0 };
-		struct termios newtio = { 0 };
-		tcgetattr(mUartID, &oldtio);
+	    fcntl(mUartID, F_SETFL, 0);
+	    struct termios opts;
+	    tcgetattr(mUartID, &opts);
 
-		newtio.c_cflag = baudRate|CS8|CLOCAL|CREAD;
-		newtio.c_iflag = 0;	// IGNPAR | ICRNL
-		newtio.c_oflag = 0;
-		newtio.c_lflag = 0;	// ICANON
-		newtio.c_cc[VTIME] = 0; /* inter-character timer unused */
-		newtio.c_cc[VMIN] = 1; /* blocking read until 1 character arrives */
-		tcflush(mUartID, TCIOFLUSH);
-		tcsetattr(mUartID, TCSANOW, &newtio);
+	    switch(baudRate)
+	    {
+	        case 4800:
+	            cfsetispeed(&opts,B4800);
+	            cfsetospeed(&opts,B4800);
+	            break;
+	        case 9600:
+	            cfsetispeed(&opts,B9600);
+	            cfsetospeed(&opts,B9600);
+	            break;
+	        case 19200:
+	            cfsetispeed(&opts,B19200);
+	            cfsetospeed(&opts,B19200);
+	            break;
+	        case 38400:
+	            cfsetispeed(&opts,B38400);
+	            cfsetospeed(&opts,B38400);
+	            break;
+	        case 115200:
+	            cfsetispeed(&opts,B115200);
+	            cfsetospeed(&opts,B115200);
+	            break;
+	        default:
+	            fprintf(stderr,"Unkown baude!\n");
+	            return -1;
+	    }
+	    opts.c_cflag |= CLOCAL|CREAD;
 
-		// 设置为非阻塞
-		fcntl(mUartID, F_SETFL, O_NONBLOCK);
+	    // 8N1
+	    opts.c_cflag &= ~PARENB;
+	    opts.c_cflag &= ~CSTOPB;
+	    opts.c_cflag |= CS8;
+
+	    opts.c_cflag &= ~CRTSCTS;
+
+	    opts.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG); //raw input
+	    opts.c_oflag &= ~OPOST; // raw output
+
+	    tcsetattr(mUartID, TCSANOW, &opts);
 
 		mIsOpen = run("uart");
 		if (!mIsOpen) {

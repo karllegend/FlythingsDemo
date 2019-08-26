@@ -212,21 +212,21 @@ static int HexStr2Int(const char* data, unsigned char* out, int out_len) {
 }
 
 static bool onButtonClick_ButtonSend(ZKButton *pButton) {
-    //mTextviewErrPtr->setVisible(false);
-    //if (mEdittextPtr->getText().length() < 1) {
-    //    return false;
-    //}
+    mTextviewErrPtr->setVisible(false);
+    if (mEdittextPtr->getText().length() < 1) {
+        return false;
+    }
 
-    //if (mButtonSendTypePtr->getText().compare(LANGUAGEMANAGER->getValue("text")) == 0) {
-    //    sendRaw((BYTE*)mEdittextPtr->getText().c_str(), mEdittextPtr->getText().size());
-    //} else {
-    //    unsigned char buffer[1024] = {0};
-    //    int size = HexStr2Int(mEdittextPtr->getText().c_str(), buffer, sizeof(buffer));
-    //    for (int i = 0; i < size; ++i) {
-    //      LOGD(" atoi() = %02x", buffer[i]);
-    //    }
-    //    sendRaw(buffer, size);
-    //}
+    if (mButtonSendTypePtr->getText().compare(LANGUAGEMANAGER->getValue("text")) == 0) {
+        sendRaw((BYTE*)mEdittextPtr->getText().c_str(), mEdittextPtr->getText().size());
+    } else {
+        unsigned char buffer[1024] = {0};
+        int size = HexStr2Int(mEdittextPtr->getText().c_str(), buffer, sizeof(buffer));
+        for (int i = 0; i < size; ++i) {
+          LOGD(" atoi() = %02x", buffer[i]);
+        }
+        sendRaw(buffer, size);
+    }
     return false;
 }
 static bool onButtonClick_sys_back(ZKButton *pButton) {
